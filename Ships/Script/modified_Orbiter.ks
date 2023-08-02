@@ -239,8 +239,6 @@ until (Orbit:ECCENTRICITY > eccOld)
   }  
   wait 0.01.
 }
-lock THROTTLE to 0.
-wait 3.
-SAS on.
+
 stage.
 print "Complete.".
