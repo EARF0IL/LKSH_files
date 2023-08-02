@@ -43,7 +43,7 @@ function calc_summary_thrust{
 }
 
 
-function calc_delta_orbital_speed{
+function calc_orbital_speed{
   return BODY:MU / (BODY:RADIUS + SHIP:ALTITUDE).
 }
 
@@ -165,7 +165,7 @@ wait until ETA:APOAPSIS < 1.
 
 print "Begin circularization.".
 RCS on.
-until calc_delta_orbital_speed() < 0{
+until calc_orbital_speed() - get_horizontal_speed() < 0{
   set angle to calc_angle_to_horizont().
   if not angle = -1{
     set target_pitch to angle.

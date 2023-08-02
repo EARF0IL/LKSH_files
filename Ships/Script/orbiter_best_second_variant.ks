@@ -5,8 +5,74 @@ function set_thrust_limit_to_engine_group {
   for part in engine_group {
     set part:THRUSTLIMIT to limit.
   }
+
+
+function get_vertical_speed{
+  return VDOT(SHIP:UP:VECTOR, SHIP:ORBIT:VELOCITY:ORBIT).
 }
 
+
+function get_horizontal_speed{
+  return VXCL(SHIP:UP:VECTOR, SHIP:ORBIT:VELOCITY:ORBIT):MAG.
+}
+
+
+function calc_gravity_force{
+  return (CONSTANT:G * BODY:MASS * SHIP:MASS) / ((BODY:RADIUS + SHIP:ALTITUDE) ^ 2). 
+}
+
+
+function calc_centrifugal_force{
+  return (SHIP:MASS * (SHIP:GROUNDSPEED ^ 2)) / (BODY:RADIUS + SHIP:ALTITUDE).
+}
+
+function calc_summary_thrust{
+  set engines_thrust to 0.
+  set engines_isp to 0.
+
+  for engine in ENGINES{
+    if engine:ignition = true and engine:flameout = false{
+      set engines_thrust to engines_thrust + engine:availablethrust.
+      set engines_isp to engines_isp + engine:isp * engine:availablethrust.
+    }
+  }
+
+  if ens_thrust < 0.01 {
+    return list(-1, -1).
+  }
+  return list(engines_thrust, engines_isp / engines_thrust).
+}
+
+
+function calc_orbital_speed{
+  return BODY:MU / (BODY:RADIUS + SHIP:ALTITUDE).
+}
+
+
+function calc_g{
+  return (constant:G * BODY:MASS) / ((BODY:RADIUS + SHIP:ALTITUDE) ^ 2)
+}
+
+
+function f_Fi{
+  set horizontal_speed to get_horizontal_speed(). //горизонтальная скорость
+  set vertical_speed to get_vertical_speed(). //вертикальная скорость
+  set g to calc_g.//g на данной высоте
+  set dV_to_orbit to calc_orbital_speed - SHIP:ORBIT:VELOCITY:ORBIT:MAG. // дельта V до первой космической (здесь еще учитывались грав. потери, но без них тоже работает)
+  set thrust_isp to calc_summary_thrust. // получаем суммарную тягу и средний удельный импульс по движкам второй ступени
+  if thrust_isp[0] = -1{
+    return -1.
+  }
+  set t to f_TfV(dV2, ThrIsp[1]*9.806, ThrIsp[0]*1000). // время, потребнное для набора первой космической
+  if t = -1{
+    return -1.
+  }
+  set dVh to f_Vorb - Vh. //недостаток горизонтальной скорости до первой космической
+  set sinFi to (g*(dVh/f_Vorb)*t2-Vz)/dV2. //а вот это сам расчет угла. 
+  if sinFi > 1 {set sinFi to 1.}
+  if sinFi < -1 {set sinFi to -1.}
+  return arcsin(sinFi). 
+}.
 
 
 
